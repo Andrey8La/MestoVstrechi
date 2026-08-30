@@ -1,6 +1,7 @@
 import { useState, useContext } from "react";
 import { CartContext } from "../context/CartContext";
 import { deliveryZones, calcDelivery } from "../data/zones";
+import { canOrder } from "../data/shopStatus";
 import DeliveryInfoModal from "../components/DeliveryInfoModal";
 import ZonesModal from "../components/ZonesModal";
 import UpsellCarousel from "../components/UpsellCarousel";
@@ -62,6 +63,7 @@ export default function CheckoutPage() {
     window.scrollTo(0, 0);
   };
 
+  /* ── Экран «Заказ принят» ── */
   if (done) return (
     <main className="p-8 max-w-xl mx-auto text-center">
       <div className="text-5xl mb-4">🎉</div>
@@ -83,6 +85,35 @@ export default function CheckoutPage() {
     </main>
   );
 
+  /* ── ✅ ЗАКРЫТО (если админ не снял ограничение) ── */
+  if (!canOrder()) return (
+    <main className="p-4 grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+      <div>
+        <a href="/" className="text-stone-400 text-sm hover:text-brand-yellow">← К меню</a>
+        <h1 className="text-xl font-bold my-6">Закрыто</h1>
+        <p className="text-stone-400">Возвращайтесь в рабочее время, чтобы сделать заказ.</p>
+        <button onClick={() => setInfoOpen(true)} className="info-link text-sm mt-3 block text-left">
+          Часы работы и условия доставки
+        </button>
+      </div>
+      <aside>
+        <h2 className="text-xl font-bold mb-4">Ваш заказ</h2>
+        {items.map((i) => (
+          <div key={i.id} className="flex items-center gap-3 mb-3">
+            <img src={i.img} onError={(e) => (e.currentTarget.src = "/img/placeholder.svg")} className="w-14 h-14 rounded object-cover" alt="" />
+            <div className="flex-1 text-sm">{i.name}</div>
+            <div className="text-sm">{i.qty * i.price} ₽</div>
+          </div>
+        ))}
+        <p className="text-sm mt-4 text-stone-400">Стоимость заказа: {total} ₽</p>
+        <p className="font-bold mt-2 text-lg">К оплате: {total} ₽</p>
+      </aside>
+      {infoOpen && <DeliveryInfoModal onClose={() => setInfoOpen(false)} onZones={() => { setInfoOpen(false); setZonesOpen(true); }} />}
+      {zonesOpen && <ZonesModal onClose={() => setZonesOpen(false)} />}
+    </main>
+  );
+
+  /* ── Основная форма ── */
   return (
     <main className="p-4 grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
       <form onSubmit={submit} noValidate>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { categories, menu } from "../data/menu";
 import { getOverrides, saveOverrides, getExtraMenu, saveExtraMenu } from "../data/menuStore";
+import { getForceOpen, setForceOpen } from "../data/shopStatus";
 
 const PASS = "mv2026";
 const NEXT = { "новый": "готовится", "готовится": "в доставке", "в доставке": "выполнен" };
@@ -12,6 +13,7 @@ export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [extra, setExtra] = useState([]);
   const [ov, setOv] = useState({});
+  const [force, setForce] = useState(getForceOpen());
   const [dish, setDish] = useState({ cat: categories[0], name: "", desc: "", weight: "", price: "", img: "" });
   const [editId, setEditId] = useState(null);
   const [editPrice, setEditPrice] = useState("");
@@ -57,7 +59,7 @@ export default function AdminPage() {
 
   return (
     <main className="p-4 max-w-5xl mx-auto">
-      <div className="flex gap-4 mb-5 items-center flex-wrap">
+      <div className="flex gap-4 mb-4 items-center flex-wrap">
         <h1 className="text-xl font-bold text-brand-yellow">Админ-панель</h1>
         <button onClick={() => setTab("orders")} className={tab === "orders" ? "text-brand-yellow font-bold" : "text-stone-400"}>Заказы ({active.length})</button>
         <button onClick={() => setTab("archive")} className={tab === "archive" ? "text-brand-yellow font-bold" : "text-stone-400"}>Архив</button>
@@ -65,7 +67,15 @@ export default function AdminPage() {
         <button onClick={() => { sessionStorage.removeItem("admin"); setOk(false); }} className="ml-auto text-stone-400 hover:text-red-400">Выйти</button>
       </div>
 
-      {/* ── Заказы / Архив + удаление заказов ── */}
+      {/* ✅ Override: принимать заказы, когда «Закрыто» */}
+      <label className="flex items-center gap-2 mb-5 text-sm cursor-pointer select-none">
+        <input type="checkbox" checked={force}
+          onChange={(e) => { setForce(e.target.checked); setForceOpen(e.target.checked); }}
+          className="w-4 h-4" />
+        <span>Принимать заказы даже когда закрыто</span>
+        {force && <span className="text-brand-yellow text-xs">(ограничение снято администратором)</span>}
+      </label>
+
       {(tab === "orders" || tab === "archive") && (
         (tab === "orders" ? active : archive).length === 0 ? <p className="text-stone-500">Пока пусто.</p> :
         (tab === "orders" ? active : archive).map((o) => (
@@ -96,7 +106,6 @@ export default function AdminPage() {
         ))
       )}
 
-      {/* ── Меню: добавить / изменить / скрыть / удалить ── */}
       {tab === "menu" && (
         <div className="grid md:grid-cols-2 gap-8">
           <div>
