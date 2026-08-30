@@ -16,9 +16,10 @@ export default function DishCard({ dish, onAdd, style }) {
           <button onClick={onAdd} className="chip border border-stone-500 rounded-md px-2.5 py-1 hover:border-brand-yellow hover:text-brand-yellow">+</button>
         </div>
       </div>
-      <div className="relative w-2/5">
+      <div className="relative w-2/5 min-h-[140px]">
         <img src={dish.img} alt={dish.name} loading="lazy"
-          onError={(e) => (e.currentTarget.src = "/img/placeholder.svg")} className="w-full h-full object-cover" />
+          onError={(e) => (e.currentTarget.src = "/img/placeholder.svg")}
+          className="absolute inset-0 w-full h-full object-cover" />
         <button onClick={() => toggle(dish.id)}
           title={fav ? "Убрать из избранного" : "В избранное"}
           className="absolute top-2 right-2 text-xl transition hover:scale-125">

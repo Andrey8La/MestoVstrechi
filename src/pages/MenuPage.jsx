@@ -23,8 +23,8 @@ export default function MenuPage() {
 
   return (
     <main className="px-4 pb-16">
-      <img src="/img/banner.jpg" alt="Кафе-доставка МестоВстречи"
-        className="w-full rounded-xl my-3 object-cover max-h-64"
+      <img src="/img/banner.jpg" alt="Кафе-доставка МестоВстречи" fetchpriority="high"
+        className="w-full rounded-xl my-3 object-cover h-40 sm:h-64"
         onError={(e) => (e.currentTarget.style.display = "none")} />
 
       {/* ✅ Баннер «Закрыто», как в оригинале */}
@@ -38,18 +38,21 @@ export default function MenuPage() {
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск по меню…"
         className="w-full my-3 px-4 py-2 rounded-full bg-brand-card border border-stone-700 focus:border-brand-yellow outline-none" />
 
-      <div className="chips py-2">
-        <button onClick={() => setFavOnly(true)}
-          className={`chip shrink-0 px-4 py-2 rounded-full border bg-white text-stone-900 ${favOnly ? "border-2 border-red-500 font-semibold" : "border-stone-300"}`}>
-          ❤ Избранное{favs.length > 0 ? ` (${favs.length})` : ""}
-        </button>
-        {categories.map((c) => (
-          <button key={c} onClick={() => { setCat(c); setFavOnly(false); }}
-            className={`chip shrink-0 px-4 py-2 rounded-full border bg-white text-stone-900 ${!favOnly && c === cat ? "border-2 border-stone-900 font-semibold" : "border-stone-300"}`}>
-            {c}
+      <div className="flex flex-wrap gap-2 py-2">
+        {/* ❤ Избранное */}
+          <button onClick={() => setFavOnly(true)}
+            className={`chip shrink-0 px-3 py-1.5 text-sm sm:px-4 sm:py-2 sm:text-base rounded-full border bg-white text-stone-900 ${favOnly ? "border-2 border-red-500 font-semibold" : "border-stone-300"}`}>
+        ❤ Избранное{favs.length > 0 ? ` (${favs.length})` : ""}
           </button>
-        ))}
-      </div>
+
+        {/* 12 категорий */}
+          {categories.map((c) => (
+          <button key={c} onClick={() => { setCat(c); setFavOnly(false); }}
+            className={`chip shrink-0 px-3 py-1.5 text-sm sm:px-4 sm:py-2 sm:text-base rounded-full border bg-white text-stone-900 ${!favOnly && c === cat ? "border-2 border-brand-yellow font-semibold" : "border-stone-300"}`}>
+      {c}
+    </button>
+  ))}
+</div>
 
       {favOnly && dishes.length === 0 ? (
         <p className="text-stone-400 text-sm mt-6">
@@ -63,8 +66,8 @@ export default function MenuPage() {
         </div>
       )}
 
-      <img src="/img/banner2.jpg" alt="Доставка любимых блюд"
-        className="w-full rounded-xl mt-8 object-cover"
+      <img src="/img/banner2.jpg" alt="Доставка любимых блюд" loading="lazy"
+        className="w-full rounded-xl mt-8 object-cover h-40 sm:h-64"
         onError={(e) => (e.currentTarget.style.display = "none")} />
     </main>
   );
