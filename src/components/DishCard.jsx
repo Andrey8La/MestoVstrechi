@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useContext } from "react";
+import { FavoritesContext } from "../context/FavoritesContext";
+
 export default function DishCard({ dish, onAdd, style }) {
-  const [fav, setFav] = useState(false);
+  const { isFav, toggle } = useContext(FavoritesContext);
+  const fav = isFav(dish.id);
+
   return (
     <div className="dish-card bg-brand-card rounded-xl overflow-hidden flex" style={style}>
       <div className="flex-1 p-4">
@@ -13,8 +17,13 @@ export default function DishCard({ dish, onAdd, style }) {
         </div>
       </div>
       <div className="relative w-2/5">
-        <img src={dish.img} alt={dish.name} loading="lazy" onError={(e) => (e.currentTarget.src = "/img/placeholder.svg")} className="w-full h-full object-cover" />
-        <button onClick={() => setFav(!fav)} className="absolute top-2 right-2">{fav ? "❤️" : "🤍"}</button>
+        <img src={dish.img} alt={dish.name} loading="lazy"
+          onError={(e) => (e.currentTarget.src = "/img/placeholder.svg")} className="w-full h-full object-cover" />
+        <button onClick={() => toggle(dish.id)}
+          title={fav ? "Убрать из избранного" : "В избранное"}
+          className="absolute top-2 right-2 text-xl transition hover:scale-125">
+          {fav ? "❤️" : "🤍"}
+        </button>
       </div>
     </div>
   );

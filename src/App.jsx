@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
+import { FavoritesProvider } from "./context/FavoritesContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import CartDrawer from "./components/CartDrawer";
@@ -15,9 +16,11 @@ import PrivacyPage from "./pages/PrivacyPage";
 export default function App() {
   return (
     <CartProvider>
-      <BrowserRouter>
-        <Layout />
-      </BrowserRouter>
+      <FavoritesProvider>
+        <BrowserRouter>
+          <Layout />
+        </BrowserRouter>
+      </FavoritesProvider>
     </CartProvider>
   );
 }
@@ -26,7 +29,7 @@ function Layout() {
   const [cartOpen, setCartOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [zonesOpen, setZonesOpen] = useState(false);
-  const nav = useNavigate(); // ✅ внутри Router — работает гарантированно
+  const nav = useNavigate(); // ✅ внутри Router — переход из корзины работает гарантированно
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-dark text-stone-100">
@@ -35,6 +38,7 @@ function Layout() {
         onOpenInfo={() => setInfoOpen(true)}
         onOpenZones={() => setZonesOpen(true)}
       />
+
       <div className="flex-1">
         <Routes>
           <Route path="/" element={<MenuPage />} />
@@ -44,15 +48,22 @@ function Layout() {
           <Route path="/history" element={<HistoryPanel />} />
         </Routes>
       </div>
+
       <Footer />
 
+      {/* ✅ Корзина и модалки — ВНУТРИ BrowserRouter */}
       {cartOpen && (
         <CartDrawer
           onClose={() => setCartOpen(false)}
           onCheckout={() => { setCartOpen(false); nav("/checkout"); }}
         />
       )}
-      {infoOpen && <DeliveryInfoModal onClose={() => setInfoOpen(false)} onZones={() => { setInfoOpen(false); setZonesOpen(true); }} />}
+      {infoOpen && (
+        <DeliveryInfoModal
+          onClose={() => setInfoOpen(false)}
+          onZones={() => { setInfoOpen(false); setZonesOpen(true); }}
+        />
+      )}
       {zonesOpen && <ZonesModal onClose={() => setZonesOpen(false)} />}
     </div>
   );

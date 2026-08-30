@@ -3,15 +3,18 @@ import { categories } from "../data/menu";
 import { buildMenu } from "../data/menuStore";
 import DishCard from "../components/DishCard";
 import { CartContext } from "../context/CartContext";
+import { FavoritesContext } from "../context/FavoritesContext";
 
 export default function MenuPage() {
   const [cat, setCat] = useState(categories[0]);
+  const [favOnly, setFavOnly] = useState(false);
   const [q, setQ] = useState("");
   const { add } = useContext(CartContext);
+  const { favs } = useContext(FavoritesContext);
 
-  const dishes = buildMenu().filter(
-    (d) => d.cat === cat && d.name.toLowerCase().includes(q.toLowerCase())
-  );
+  const all = buildMenu();
+  const base = favOnly ? all.filter((d) => favs.includes(d.id)) : all.filter((d) => d.cat === cat);
+  const dishes = base.filter((d) => d.name.toLowerCase().includes(q.toLowerCase()));
 
   return (
     <main className="px-4 pb-16">
@@ -23,19 +26,30 @@ export default function MenuPage() {
         className="w-full my-3 px-4 py-2 rounded-full bg-brand-card border border-stone-700 focus:border-brand-yellow outline-none" />
 
       <div className="chips py-2">
+        {/* ❤ Избранное */}
+        <button onClick={() => setFavOnly(true)}
+          className={`chip shrink-0 px-4 py-2 rounded-full border bg-white text-stone-900 ${favOnly ? "border-2 border-red-500 font-semibold" : "border-stone-300"}`}>
+          ❤ Избранное{favs.length > 0 ? ` (${favs.length})` : ""}
+        </button>
         {categories.map((c) => (
-          <button key={c} onClick={() => setCat(c)}
-            className={`chip shrink-0 px-4 py-2 rounded-full border bg-white text-stone-900 ${c === cat ? "border-2 border-stone-900 font-semibold" : "border-stone-300"}`}>
+          <button key={c} onClick={() => { setCat(c); setFavOnly(false); }}
+            className={`chip shrink-0 px-4 py-2 rounded-full border bg-white text-stone-900 ${!favOnly && c === cat ? "border-2 border-stone-900 font-semibold" : "border-stone-300"}`}>
             {c}
           </button>
         ))}
       </div>
 
-      <div className="dishes-grid mt-4" key={cat}>
-        {dishes.map((d, i) => (
-          <DishCard key={d.id} dish={d} onAdd={() => add(d)} style={{ animationDelay: `${i * 0.05}s` }} />
-        ))}
-      </div>
+      {favOnly && dishes.length === 0 ? (
+        <p className="text-stone-400 text-sm mt-6">
+          В избранном пока пусто — нажми 🤍 на карточке блюда, и оно появится здесь.
+        </p>
+      ) : (
+        <div className="dishes-grid mt-4" key={cat + String(favOnly)}>
+          {dishes.map((d, i) => (
+            <DishCard key={d.id} dish={d} onAdd={() => add(d)} style={{ animationDelay: `${i * 0.05}s` }} />
+          ))}
+        </div>
+      )}
 
       <img src="/img/banner2.jpg" alt="Доставка любимых блюд"
         className="w-full rounded-xl mt-8 object-cover"
