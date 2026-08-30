@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300">
+  <rect width="400" height="300" fill="#1E1B18"/>
+  <g stroke="#F2E304" stroke-width="4" fill="none" stroke-linecap="round">
+    <path d="M188 118 q6 -10 0 -20"/>
+    <path d="M206 118 q6 -10 0 -20"/>
+  </g>
+  <path d="M165 128 h70 a35 35 0 0 1 -70 0 z" fill="#F2E304"/>
+  <rect x="180" y="168" width="40" height="5" fill="#F2E304"/>
+  <text x="200" y="205" font-size="18" text-anchor="middle" fill="#F2E304" font-family="Arial, sans-serif">МестоВстречи</text>
+  <text x="200" y="230" font-size="12" text-anchor="middle" fill="#A8A29E" font-family="Arial, sans-serif">фото скоро будет</text>
+</svg>
