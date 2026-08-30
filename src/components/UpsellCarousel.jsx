@@ -10,7 +10,7 @@ export default function UpsellCarousel() {
 
   return (
     <section className="mt-8">
-      <h3 className="text-center text-lg mb-4">Что-то ещё?</h3>
+      <h3 className="text-center text-lg mb-4 text-brand-yellow">Что-то ещё?</h3>
       <div className="relative">
         <button type="button" onClick={() => scroll(-1)} className="absolute left-0 top-1/3 z-10 text-brand-yellow text-xl hover:scale-125 transition">◄</button>
         <div ref={ref} className="flex gap-3 overflow-x-auto px-8" style={{ scrollbarWidth: "none" }}>
@@ -19,8 +19,7 @@ export default function UpsellCarousel() {
               <img src={d.img} onError={(e) => (e.currentTarget.src = "/img/placeholder.svg")} className="h-32 w-full object-cover" alt={d.name} />
               <div className="p-2">
                 <p className="text-sm text-stone-800">{d.name}</p>
-                <button type="button" onClick={() => add(d)}
-                  className="mt-2 w-full bg-brand-dark text-white rounded-md py-1.5 text-sm hover:bg-brand-yellow hover:text-black transition">
+                <button type="button" onClick={() => add(d)} className="mt-2 w-full bg-brand-dark text-white rounded-md py-1.5 text-sm hover:bg-brand-yellow hover:text-black transition">
                   {d.price} ₽
                 </button>
               </div>
