@@ -26,7 +26,17 @@ export default function AdminPage() {
 
   const saveOrders = (o) => { localStorage.setItem("orders", JSON.stringify(o)); setOrders(o); };
 
-  /* ── Форма входа (рисунок Д.1) ── */
+  const deleteOrder = (id) => {
+    if (!window.confirm("Удалить заказ безвозвратно?")) return;
+    saveOrders(orders.filter((x) => x.id !== id));
+  };
+
+  const deleteDish = (id) => {
+    if (!window.confirm("Удалить добавленное блюдо?")) return;
+    const e2 = extra.filter((x) => x.id !== id);
+    saveExtraMenu(e2); setExtra(e2);
+  };
+
   if (!ok) return (
     <main className="p-8 max-w-sm mx-auto">
       <h1 className="text-xl font-bold mb-4 text-brand-yellow">Вход в админ-режим</h1>
@@ -40,7 +50,10 @@ export default function AdminPage() {
 
   const active = orders.filter((o) => o.status !== "выполнен");
   const archive = orders.filter((o) => o.status === "выполнен");
-  const allDishes = [...menu, ...extra].map((d) => (ov[d.id] ? { ...d, ...ov[d.id] } : d));
+  const allDishes = [
+    ...menu.map((d) => ({ ...d, extra: false })),
+    ...extra.map((d) => ({ ...d, extra: true })),
+  ].map((d) => (ov[d.id] ? { ...d, ...ov[d.id] } : d));
 
   return (
     <main className="p-4 max-w-5xl mx-auto">
@@ -52,7 +65,7 @@ export default function AdminPage() {
         <button onClick={() => { sessionStorage.removeItem("admin"); setOk(false); }} className="ml-auto text-stone-400 hover:text-red-400">Выйти</button>
       </div>
 
-      {/* ── Заказы / Архив (рисунки Д.2–Д.5) ── */}
+      {/* ── Заказы / Архив + удаление заказов ── */}
       {(tab === "orders" || tab === "archive") && (
         (tab === "orders" ? active : archive).length === 0 ? <p className="text-stone-500">Пока пусто.</p> :
         (tab === "orders" ? active : archive).map((o) => (
@@ -67,17 +80,23 @@ export default function AdminPage() {
             )}
             <p className="text-sm mt-2">{o.items.map((i) => `${i.name} ×${i.qty}`).join(", ")}</p>
             <p className="text-xs text-stone-500 mt-1">Оплата: {o.payment}{o.comment ? ` · Комментарий: ${o.comment}` : ""}</p>
-            {o.status !== "выполнен" && (
-              <button onClick={() => saveOrders(orders.map((x) => x.id === o.id ? { ...x, status: NEXT[x.status] } : x))}
-                className="mt-3 px-4 py-1.5 rounded-full border border-brand-yellow text-brand-yellow hover:bg-brand-yellow hover:text-black transition">
-                Статус: {o.status} →
+            <div className="flex gap-2 mt-3">
+              {o.status !== "выполнен" && (
+                <button onClick={() => saveOrders(orders.map((x) => x.id === o.id ? { ...x, status: NEXT[x.status] } : x))}
+                  className="px-4 py-1.5 rounded-full border border-brand-yellow text-brand-yellow hover:bg-brand-yellow hover:text-black transition">
+                  Статус: {o.status} →
+                </button>
+              )}
+              <button onClick={() => deleteOrder(o.id)}
+                className="px-4 py-1.5 rounded-full border border-red-500 text-red-400 hover:bg-red-500 hover:text-white transition">
+                Удалить
               </button>
-            )}
+            </div>
           </div>
         ))
       )}
 
-      {/* ── Меню: добавить блюдо (Д.6) + изменение цены/скрытие (Д.7–Д.8) ── */}
+      {/* ── Меню: добавить / изменить / скрыть / удалить ── */}
       {tab === "menu" && (
         <div className="grid md:grid-cols-2 gap-8">
           <div>
@@ -98,11 +117,11 @@ export default function AdminPage() {
             <p className="text-xs text-stone-500 mt-2">Файл фото положи в public/img — блюдо сразу появится в меню клиента.</p>
           </div>
           <div>
-            <h2 className="font-bold mb-3">Изменить цену / скрыть блюдо</h2>
+            <h2 className="font-bold mb-3">Цена / скрыть / удалить</h2>
             <div className="max-h-[60vh] overflow-y-auto pr-2">
               {allDishes.map((d) => (
                 <div key={d.id} className={`flex items-center gap-2 mb-2 text-sm ${d.hidden ? "opacity-40" : ""}`}>
-                  <span className="flex-1">{d.name} · <b>{d.price} ₽</b></span>
+                  <span className="flex-1">{d.name} · <b>{d.price} ₽</b>{d.extra && <span className="text-brand-yellow text-xs"> (добавлено)</span>}</span>
                   {editId === d.id ? (
                     <>
                       <input value={editPrice} onChange={(e) => setEditPrice(e.target.value)} className="w-20 bg-brand-card p-1 rounded" />
@@ -112,9 +131,13 @@ export default function AdminPage() {
                     <button onClick={() => { setEditId(d.id); setEditPrice(String(d.price)); }} className="text-stone-400 hover:text-brand-yellow">Изменить</button>
                   )}
                   <button onClick={() => { const o2 = { ...ov, [d.id]: { ...ov[d.id], hidden: !d.hidden } }; saveOverrides(o2); setOv(o2); }} className="text-stone-400 hover:text-red-400">{d.hidden ? "Показать" : "Скрыть"}</button>
+                  {d.extra && (
+                    <button onClick={() => deleteDish(d.id)} className="text-stone-400 hover:text-red-400">Удалить</button>
+                  )}
                 </div>
               ))}
             </div>
+            <p className="text-xs text-stone-500 mt-2">Базовые блюда скрываются (они в коде приложения), добавленные — удаляются полностью.</p>
           </div>
         </div>
       )}
