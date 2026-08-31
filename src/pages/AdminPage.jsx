@@ -5,7 +5,7 @@ import { getForceOpen, setForceOpen } from "../data/shopStatus";
 
 const PASS = "mv2026";
 
-// ✅ Цепочки статусов по типу заказа
+// Цепочки статусов по типу заказа
 const nextStatus = (o) => {
   const chain = o.type === "Самовывоз"
     ? ["новый", "готовится", "готов к выдаче", "выполнен"]
@@ -32,6 +32,7 @@ export default function AdminPage() {
   const [extra, setExtra] = useState([]);
   const [ov, setOv] = useState({});
   const [force, setForce] = useState(getForceOpen());
+  const [openId, setOpenId] = useState(null);
   const [dish, setDish] = useState({ cat: categories[0], name: "", desc: "", weight: "", price: "", img: "" });
   const [editId, setEditId] = useState(null);
   const [editPrice, setEditPrice] = useState("");
@@ -86,46 +87,64 @@ export default function AdminPage() {
     ...extra.map((d) => ({ ...d, extra: true })),
   ].map((d) => (ov[d.id] ? { ...d, ...ov[d.id] } : d));
 
-  const OrderCard = ({ o }) => (
-    <div className="bg-brand-card rounded-xl p-4 mb-3 border border-stone-800 hover:border-stone-600 transition">
-      <div className="flex justify-between items-start gap-2 flex-wrap">
-        <div>
-          <p className="font-bold">№{String(o.id).slice(-4)} · {new Date(o.id).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · {o.when}</p>
-          <p className="text-sm text-stone-400 mt-1">👤 {o.name}, {o.phone}</p>
-          {o.type === "Доставка" && (
-            <p className="text-sm text-stone-400">📍 {o.address}, кв/офис {o.flat} · зона: {o.zone}</p>
-          )}
-          {o.type === "Самовывоз" && <p className="text-sm text-stone-400">🏪 Самовывоз: с. Хомутово, ул. Мичурина, 1Б</p>}
-        </div>
-        <div className="text-right">
-          <p className="text-xl font-bold text-brand-yellow">{o.sum} ₽</p>
-          <span className={`inline-block text-xs px-2 py-1 rounded-full border mt-1 ${STATUS_STYLE[o.status]}`}>{o.status}</span>
-        </div>
-      </div>
-      <div className="mt-3 bg-brand-dark/60 rounded-lg p-2.5 text-sm">
-        {o.items.map((i) => (
-          <div key={i.id} className="flex justify-between gap-2">
-            <span>{i.name} ×{i.qty}</span>
-            <span className="text-stone-400">{i.qty * i.price} ₽</span>
+  /* ── Карточка заказа: клик по строке раскрывает состав (Приложение Д, п. 4) ── */
+  const OrderCard = ({ o }) => {
+    const open = openId === o.id;
+    return (
+      <div className="bg-brand-card rounded-xl mb-3 border border-stone-800 hover:border-stone-600 transition overflow-hidden">
+        <button onClick={() => setOpenId(open ? null : o.id)} className="w-full flex justify-between items-center gap-2 p-4 text-left">
+          <div>
+            <p className="font-bold">№{String(o.id).slice(-4)} · {new Date(o.id).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} {o.type === "Доставка" ? "🚚" : "🏪"}</p>
+            <p className="text-xs text-stone-500 mt-0.5">{open ? "нажми, чтобы свернуть" : "нажми, чтобы открыть карточку"}</p>
           </div>
-        ))}
-        {o.delivery > 0 && <div className="flex justify-between text-stone-400"><span>Доставка</span><span>{o.delivery} ₽</span></div>}
-      </div>
-      <p className="text-xs text-stone-500 mt-2">💳 {o.payment}{o.comment ? ` · 💬 ${o.comment}` : ""}</p>
-      <div className="flex gap-2 mt-3">
-        {o.status !== "выполнен" && (
-          <button onClick={() => saveOrders(orders.map((x) => x.id === o.id ? { ...x, status: nextStatus(x) } : x))}
-            className="px-4 py-1.5 rounded-full border border-brand-yellow text-brand-yellow hover:bg-brand-yellow hover:text-black transition">
-            Статус: {o.status} →
-          </button>
-        )}
-        <button onClick={() => deleteOrder(o.id)}
-          className="px-4 py-1.5 rounded-full border border-red-500 text-red-400 hover:bg-red-500 hover:text-white transition">
-          Удалить
+          <div className="text-right shrink-0">
+            <p className="text-xl font-bold text-brand-yellow">{o.sum} ₽</p>
+            <span className={`inline-block text-xs px-2 py-1 rounded-full border ${STATUS_STYLE[o.status]}`}>{o.status}</span>
+          </div>
         </button>
+
+        {open && (
+          <div className="px-4 pb-4 border-t border-stone-800">
+            <p className="text-sm text-stone-400 mt-3">👤 {o.name}, {o.phone}</p>
+            <p className="text-sm text-stone-400 mt-1">
+              {o.type === "Доставка"
+                ? <>📍 Адрес: {o.address}, кв/офис {o.flat} · зона: {o.zone}</>
+                : <>🏪 Самовывоз: с. Хомутово, ул. Мичурина, 1Б</>}
+            </p>
+
+            <div className="mt-3 bg-brand-dark/60 rounded-lg p-2.5 text-sm">
+              <p className="text-xs text-stone-500 mb-1">Состав заказа:</p>
+              {o.items.map((i) => (
+                <div key={i.id} className="flex justify-between gap-2">
+                  <span>{i.name} ×{i.qty}</span>
+                  <span className="text-stone-400">{i.qty * i.price} ₽</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-stone-400 mt-1"><span>Доставка</span><span>{o.delivery === 0 ? "бесплатно" : o.delivery + " ₽"}</span></div>
+              <div className="flex justify-between font-bold text-brand-yellow mt-1"><span>Итог</span><span>{o.sum} ₽</span></div>
+            </div>
+
+            <p className="text-xs text-stone-500 mt-2">💳 Оплата: {o.payment}</p>
+            <p className="text-xs text-stone-500 mt-0.5">🕐 Время: {o.when}</p>
+            {o.comment && <p className="text-xs text-stone-500 mt-0.5">💬 Комментарий: {o.comment}</p>}
+
+            <div className="flex gap-2 mt-3">
+              {o.status !== "выполнен" && (
+                <button onClick={() => saveOrders(orders.map((x) => x.id === o.id ? { ...x, status: nextStatus(x) } : x))}
+                  className="px-4 py-1.5 rounded-full border border-brand-yellow text-brand-yellow hover:bg-brand-yellow hover:text-black transition">
+                  Статус: {o.status} →
+                </button>
+              )}
+              <button onClick={() => deleteOrder(o.id)}
+                className="px-4 py-1.5 rounded-full border border-red-500 text-red-400 hover:bg-red-500 hover:text-white transition">
+                Удалить
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <main className="p-4 max-w-5xl mx-auto">
@@ -145,6 +164,7 @@ export default function AdminPage() {
 
       {(tab === "orders" || tab === "archive") && (
         <>
+          {/* Сводка за сегодня */}
           <div className="grid sm:grid-cols-3 gap-3 mb-4">
             <div className="bg-brand-card rounded-xl p-4 border-l-4 border-brand-yellow">
               <p className="text-xs text-stone-400">Итого сегодня</p>
@@ -161,6 +181,7 @@ export default function AdminPage() {
             </div>
           </div>
 
+          {/* Выручка по дням */}
           {stats.length > 0 && (
             <div className="bg-brand-card rounded-xl p-4 mb-5 overflow-x-auto">
               <p className="font-bold mb-2 text-sm">📈 Выручка по дням</p>
