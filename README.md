@@ -1,16 +1,71 @@
-# React + Vite
+# MestoVstrechi — сайт кафе-доставки еды
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Учебный проект производственной практики: сайт доставки кафе «МестоВстречи»
+(ИП Макарова Е.А., Иркутский р-н, с. Хомутово, ул. Мичурина, 1Б).
+Построен по результатам анализа оригинального меню: 114 блюд, 12 категорий,
+34 зоны доставки в 6 тарифных группах.
 
-Currently, two official plugins are available:
+## Стек
+React 19 + Vite, Tailwind CSS, React Router, localStorage,
+Jest (8 юнит-тестов), ESLint, Lighthouse (Performance 90+).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Возможности сайта (клиент)
+- Меню: 12 категорий + поиск + избранное (сердечко, раздел "Избранное (N)"),
+  адаптивная сетка 1/2/3 колонки, чипы с переносом на мобильных.
+- Корзина: изменение количества, удаление, промокоды MV10 (-10%) и MV200 (-200 р.),
+  сохраняется после перезагрузки страницы; минус при количестве 1 удаляет блюдо.
+- Оформление заказа:
+  * маски ввода — телефон +7 (___) ___-__-__, имя только буквами,
+    кв/офис-подъезд-этаж только цифрами, домофон цифры+#;
+  * доставка/самовывоз; адрес с кв/офис, домофон, подъезд, этаж; комментарий;
+  * 34 зоны доставки (6 тарифных групп): ниже минимума зоны заказ идёт
+    с платной доставкой, от минимума — доставка бесплатная;
+  * время: "ближайшее" / "Сегодня-Завтра + время"; оплата налом/картой при получении;
+  * согласие на Политику ПДн ИП Макаровой Е.А. (152-ФЗ): кнопка "Заказать"
+    неактивна без чекбокса;
+  * карусель "Что-то ещё?" (напитки) для роста среднего чека;
+  * экран "Заказ принят" с номером и трекингом статуса.
+- Блокировка "Закрыто" вне часов работы (10:00-22:55, Asia/Irkutsk) —
+  баннер в меню и экран на оформлении; администратор может снять ограничение.
+- История заказов с кнопкой "Повторить заказ" (лояльность).
 
-## React Compiler
+## Админ-панель (/admin, пароль mv2026)
+- Заказы: карточки "чеком" (состав, адрес/зона, оплата, комментарий),
+  цветные бейджи статусов; цепочки по типу заказа:
+  * доставка: новый -> готовится -> в доставке -> выполнен;
+  * самовывоз: новый -> готовится -> готов к выдаче -> выполнен;
+  удаление заказа.
+- Финансы: сводка за сегодня (итого / наличные / карта) и таблица
+  "Выручка по дням" (нал, карта, итого, число заказов).
+- Меню: добавление блюда с фото в public/img (сразу на сайте),
+  изменение цены, скрытие/показ, удаление добавленных блюд.
+- Override часов работы: "Принимать заказы даже когда закрыто".
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Тестирование и качество
+- Jest: 8 юнит-тестов (calcDelivery, 34 зоны, 6 групп, промокоды) — npm test.
+- ESLint: инспектирование без ошибок — npx eslint src/.
+- Lighthouse: Performance 91+ (фиксы CLS/LCP, lazy-фото, preload баннера).
 
-## Expanding the Oxlint configuration
+## Развёртывание на любом ПК
+1. Установить Node.js LTS и Git.
+2. Распаковать архив или: git clone https://github.com/Andrey8La/MestoVstrechi.git
+3. В папке проекта:
+   npm install      # зависимости
+   npm run dev      # http://localhost:5173
+   npm test         # 8 тестов Jest
+   npm run build    # прод-сборка в dist/
+   npm run preview  # http://localhost:4173
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Служебные данные
+- Админка: /admin, пароль mv2026
+- Промокоды: MV10 (-10%), MV200 (-200 р.)
+- Часы работы: 10:00-22:55 (Asia/Irkutsk), override в админке
+
+## Структура
+public/img/     фото блюд, баннеры, логотип, placeholder
+src/data/       меню (114), зоны (34), промокоды, menuStore, shopStatus
+src/context/    CartContext, FavoritesContext
+src/components/ Header, Footer, DishCard, CartDrawer, модалки, UpsellCarousel, HistoryPanel
+src/pages/      MenuPage, CheckoutPage, AdminPage, PrivacyPage
+src/tests/      юнит-тесты Jest
+docs/           документы практики (отчёт, дневники, эссе, характеристика, распоряжение)

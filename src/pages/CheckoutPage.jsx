@@ -7,11 +7,28 @@ import ZonesModal from "../components/ZonesModal";
 import UpsellCarousel from "../components/UpsellCarousel";
 import { sendOrderToIiko } from "../api/iiko";
 
-function Field({ label, v, onChange, err, hint, icon, onIcon }) {
+/* ── Маски ввода ── */
+const maskPhone = (raw) => {
+  let d = raw.replace(/\D/g, "");
+  if (d.startsWith("8")) d = "7" + d.slice(1);
+  if (!d.startsWith("7")) d = "7" + d;
+  d = d.slice(0, 11);
+  const p = d.slice(1);
+  let out = "+7";
+  if (p.length) out += " (" + p.slice(0, 3);
+  if (p.length >= 4) out += ") " + p.slice(3, 6);
+  if (p.length >= 7) out += "-" + p.slice(6, 8);
+  if (p.length >= 9) out += "-" + p.slice(8, 10);
+  return out;
+};
+const cleanName = (v) => v.replace(/[^a-zA-Zа-яА-ЯёЁ\s-]/g, "");
+const onlyDigits = (v, n = 4) => v.replace(/\D/g, "").slice(0, n);
+
+function Field({ label, v, onChange, err, hint, icon, onIcon, type = "text", inputMode }) {
   return (
     <div className="mb-4">
       <div className="flex items-center gap-2">
-        <input value={v} onChange={(e) => onChange(e.target.value)} placeholder={label}
+        <input type={type} inputMode={inputMode} value={v} onChange={(e) => onChange(e.target.value)} placeholder={label}
           className={`flex-1 bg-transparent border-b ${err ? "border-red-500 placeholder-red-400" : "border-stone-600 placeholder-stone-500"} focus:border-brand-yellow outline-none py-2`} />
         {icon && <button type="button" onClick={onIcon} title="Зоны доставки" className="text-stone-400 hover:text-brand-yellow">{icon}</button>}
       </div>
@@ -42,13 +59,13 @@ export default function CheckoutPage() {
   const submit = (e) => {
     e.preventDefault();
     const er = {};
-    if (!f.name.trim()) er.name = "Введите имя";
-    if (!f.phone.trim()) er.phone = "Введите номер телефона";
-    if (f.type === "Доставка" && !f.address.trim()) er.address = "Введите адрес доставки";
+    if (f.name.trim().length < 2) er.name = "Введите имя (минимум 2 буквы)";
+    if (f.phone.replace(/\D/g, "").length !== 11) er.phone = "Введите номер полностью: +7 (___) ___-__-__";
+    if (f.type === "Доставка" && f.address.trim().length < 5) er.address = "Введите адрес: улица, дом";
     if (f.type === "Доставка" && !f.flat.trim()) er.flat = "Введите кв/офис";
     if (!f.agree) er.agree = "Подтвердите согласие";
     setErr(er);
-    if (Object.keys(er).length || short) return;
+    if (Object.keys(er).length) return;
 
     const order = {
       id: Date.now(), ...f, items, sum: total + delivery, delivery, status: "новый",
@@ -63,7 +80,6 @@ export default function CheckoutPage() {
     window.scrollTo(0, 0);
   };
 
-  /* ── Экран «Заказ принят» ── */
   if (done) return (
     <main className="p-8 max-w-xl mx-auto text-center">
       <div className="text-5xl mb-4">🎉</div>
@@ -73,7 +89,9 @@ export default function CheckoutPage() {
       <div className="mt-6 bg-brand-card rounded-xl p-4">
         <p className="text-sm text-stone-400 mb-1">Статус заказа</p>
         <p className="text-lg font-bold text-brand-yellow">{done.status}</p>
-        <p className="text-xs text-stone-500 mt-1">далее: готовится → в доставке → выполнен</p>
+        <p className="text-xs text-stone-500 mt-1">
+          далее: {done.type === "Самовывоз" ? "готовится → готов к выдаче → выполнен" : "готовится → в доставке → выполнен"}
+        </p>
       </div>
       <a href="/" className="inline-block mt-6 text-brand-yellow underline">← Вернуться в меню</a>
     </main>
@@ -85,7 +103,6 @@ export default function CheckoutPage() {
     </main>
   );
 
-  /* ── ✅ ЗАКРЫТО (если админ не снял ограничение) ── */
   if (!canOrder()) return (
     <main className="p-4 grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
       <div>
@@ -113,7 +130,6 @@ export default function CheckoutPage() {
     </main>
   );
 
-  /* ── Основная форма ── */
   return (
     <main className="p-4 grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
       <form onSubmit={submit} noValidate>
@@ -125,17 +141,17 @@ export default function CheckoutPage() {
           <option className="bg-brand-card">Самовывоз</option>
         </select>
 
-        <Field label="Имя" v={f.name} onChange={(v) => set("name", v)} err={err.name} />
-        <Field label="Телефон" v={f.phone} onChange={(v) => set("phone", v)} err={err.phone} />
+        <Field label="Имя" v={f.name} onChange={(v) => set("name", cleanName(v))} err={err.name} />
+        <Field label="+7 (___) ___-__-__" v={f.phone} onChange={(v) => set("phone", maskPhone(v))} err={err.phone} type="tel" inputMode="tel" />
 
         {f.type === "Доставка" && (
           <>
-            <Field label="Адрес доставки" v={f.address} onChange={(v) => set("address", v)} err={err.address} icon="🗺" onIcon={() => setZonesOpen(true)} />
+            <Field label="Адрес доставки (улица, дом)" v={f.address} onChange={(v) => set("address", v)} err={err.address} icon="🗺" onIcon={() => setZonesOpen(true)} />
             <div className="grid grid-cols-4 gap-3">
-              <Field label="Кв/офис" v={f.flat} onChange={(v) => set("flat", v)} err={err.flat} />
-              <Field label="Домофон" v={f.domofon} onChange={(v) => set("domofon", v)} />
-              <Field label="Подъезд" v={f.entrance} onChange={(v) => set("entrance", v)} />
-              <Field label="Этаж" v={f.floor} onChange={(v) => set("floor", v)} />
+              <Field label="Кв/офис" v={f.flat} onChange={(v) => set("flat", onlyDigits(v))} err={err.flat} inputMode="numeric" />
+              <Field label="Домофон" v={f.domofon} onChange={(v) => set("domofon", v.replace(/[^\d#]/g, "").slice(0, 6))} inputMode="numeric" />
+              <Field label="Подъезд" v={f.entrance} onChange={(v) => set("entrance", onlyDigits(v, 3))} inputMode="numeric" />
+              <Field label="Этаж" v={f.floor} onChange={(v) => set("floor", onlyDigits(v, 3))} inputMode="numeric" />
             </div>
             <label className="block text-sm text-stone-400 mt-4 mb-1">Зона доставки</label>
             <select value={f.zone} onChange={(e) => set("zone", e.target.value)} className="w-full bg-transparent border-b border-stone-600 focus:border-brand-yellow outline-none py-2">
@@ -143,7 +159,11 @@ export default function CheckoutPage() {
               {deliveryZones.map((z) => <option key={z.name} className="bg-brand-card">{z.name}</option>)}
             </select>
             {zone && <p className="text-xs mt-2 text-stone-400">Мин. заказ: <b>{zone.minOrder} ₽</b> · Доставка: <b>{delivery === 0 ? "бесплатно" : delivery + " ₽"}</b></p>}
-            {short && <p className="text-red-500 text-xs mt-1">⚠ До минимальной суммы заказа не хватает {zone.minOrder - total} ₽</p>}
+            {short && (
+              <p className="text-amber-400 text-xs mt-1">
+                ⚠ Заказ ниже минимума зоны — добавится платная доставка {delivery} ₽. Соберёте от {zone.minOrder} ₽ — доставка станет бесплатной.
+              </p>
+            )}
           </>
         )}
 

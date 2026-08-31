@@ -32,7 +32,11 @@ export function CartProvider({ children }) {
   };
 
   const change = (id, d) =>
-    setItems((p) => p.map((i) => (i.id === id ? { ...i, qty: Math.max(1, i.qty + d) } : i)));
+    setItems((p) =>
+    p
+      .map((i) => (i.id === id ? { ...i, qty: i.qty + d } : i))
+      .filter((i) => i.qty > 0)   // qty дошло до 0 → блюдо исчезает из корзины
+  );
 
   const remove = (id) => setItems((p) => p.filter((i) => i.id !== id));
 
